@@ -3,6 +3,7 @@ import React from "react";
 import { ThemeSwitcherProvider } from "react-css-theme-switcher";
 import ReactDOM from "react-dom";
 import App from "./App";
+//import AppOrig from "./AppOrig";
 import "./index.css";
 
 const themes = {
