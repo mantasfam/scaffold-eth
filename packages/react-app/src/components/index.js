@@ -20,3 +20,4 @@ export { default as Sell } from "./Sell";
 export { default as Mint } from "./Mint";
 export { default as LazyMint } from "./LazyMint";
 export { default as RaribleItemIndexer } from "./RaribleItemIndexer";
+export { default as MyNFTs } from "./MyNFTs";

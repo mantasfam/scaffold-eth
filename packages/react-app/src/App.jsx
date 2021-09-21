@@ -18,6 +18,7 @@ import {
   Faucet,
   GasGauge,*/
   Header,
+  MyNFTs,
   /*Ramp,
   ThemeSwitch,
   Sell,
@@ -29,9 +30,9 @@ import { /*DAI_ABI, DAI_ADDRESS,*/ INFURA_ID /*NETWORK, NETWORKS*/ } from "./con
 //import { Transactor } from "./helpers";
 import {
   useBalance,
-  /*useContractLoader,
+  useContractLoader,
   useContractReader,
-  useEventListener,
+  /*useEventListener,
   useExchangePrice,
   useExternalContractLoader,
   useGasPrice,
@@ -72,29 +73,29 @@ function App(props) {
     }
   }, [loadWeb3Modal]);
 
-  const metamaskAddressLocal = useUserAddress(injectedProvider);
-  const metamaskAddressBalanceWeiLocal = useBalance(injectedProvider, metamaskAddressLocal);
+  const metamaskAddress = useUserAddress(injectedProvider);
+  const metamaskAddressBalanceWei = useBalance(injectedProvider, metamaskAddress);
 
+  const metamaskNetworkName = injectedProvider && injectedProvider._network && injectedProvider._network.name;
   /* hook panaudojimas setState
   const [metamaskAddress, setMetamaskAddress] = useState();
   useEffect(() => {
-    setMetamaskAddress(metamaskAddressLocal);
-  }, [metamaskAddressLocal]);
+    setMetamaskAddress(metamaskAddress);
+  }, [metamaskAddress]);
   const [metamaskAddressBalanceWei, setMetamaskAddressBalanceWei] = useState();
   useEffect(() => {
-    setMetamaskAddressBalanceWei(metamaskAddressBalanceWeiLocal);
-  }, [metamaskAddressBalanceWeiLocal]);*/
+    setMetamaskAddressBalanceWei(metamaskAddressBalanceWei);
+  }, [metamaskAddressBalanceWei]);*/
 
   return (
     <div className="App">
       <Header />
-
-      <h1>APP</h1>
-
+      <MyNFTs />
       {/* 👨‍💼 Your account is in the top right with a wallet at connect options */}
       <div style={{ position: "fixed", textAlign: "right", right: 0, top: 0, padding: 10 }}>
-        <div> Metamask address: {metamaskAddressLocal}</div>
-        <div> Metamask address balance: {formatEther(metamaskAddressBalanceWeiLocal || BigNumber.from("0"))} eth</div>
+        <div> Metamask network name: {metamaskNetworkName}</div>
+        <div> Metamask address: {metamaskAddress}</div>
+        <div> Metamask address balance: {formatEther(metamaskAddressBalanceWei || BigNumber.from("0"))} eth</div>
       </div>
     </div>
   );
