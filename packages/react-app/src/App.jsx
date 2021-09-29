@@ -27,7 +27,7 @@ import {
   LazyMint,
   RaribleItemIndexer,*/
 } from "./components";
-import { /*DAI_ABI, DAI_ADDRESS,*/ INFURA_ID /*NETWORK, NETWORKS*/ } from "./constants";
+import { /*DAI_ABI, DAI_ADDRESS,*/ INFURA_ID /*NETWORK*/, NETWORKS } from "./constants";
 //import { Transactor } from "./helpers";
 import {
   useBalance,
@@ -41,8 +41,6 @@ import {
   useUserProvider,*/
 } from "./hooks";
 //import { matchSellOrder, prepareMatchingOrder } from "./rarible/createOrders";
-
-console.log("STARTING PAGE 0....");
 
 /*
   Web3 modal helps us "connect" external wallets:
@@ -61,8 +59,6 @@ const web3Modal = new Web3Modal({
 });
 
 function App(props) {
-  console.log("STARTING PAGE 1....");
-
   // connect to injected provider
   const [injectedProvider, setInjectedProvider] = useState();
   const loadWeb3Modal = useCallback(async () => {
@@ -102,6 +98,13 @@ function App(props) {
     setRoute(window.location.pathname);
   }, [setRoute]);
 
+  const [targetNetwork, setTargetNetwork] = useState([]);
+  useEffect(() => {
+    if (metamaskNetworkName) {
+      setTargetNetwork(NETWORKS[metamaskNetworkName]);
+    }
+  }, [metamaskNetworkName]);
+
   // IPFS PART ----------------------------------------
   const { BufferList } = require("bl");
   // https://www.npmjs.com/package/ipfs-http-client
@@ -112,13 +115,13 @@ function App(props) {
   // you usually go content.toString() after this...
   const getFromIPFS = async hashToGet => {
     for await (const file of ipfs.get(hashToGet)) {
-      console.log("File path: " + file.path);
+      //console.log("File path: " + file.path);
       if (!file.content) continue;
       const content = new BufferList();
       for await (const chunk of file.content) {
         content.append(chunk);
       }
-      console.log(content);
+      //console.log(content);
       return content;
     }
   };
@@ -131,20 +134,20 @@ function App(props) {
       const collectibleUpdate = [];
       for (let tokenIndex = 0; tokenIndex < balance; tokenIndex++) {
         try {
-          console.log("Getting token index", tokenIndex);
+          //console.log("Getting token index", tokenIndex);
           const tokenId = await readContracts.YourCollectible.tokenOfOwnerByIndex(metamaskAddress, tokenIndex);
-          console.log("tokenId", tokenId);
+          //console.log("tokenId", tokenId);
           const tokenURI = await readContracts.YourCollectible.tokenURI(tokenId);
-          console.log("tokenURI", tokenURI);
+          //console.log("tokenURI", tokenURI);
 
           const ipfsHash = tokenURI.replace("https://ipfs.io/ipfs/", "");
-          console.log("token ipfsHash", ipfsHash);
+          //console.log("token ipfsHash", ipfsHash);
 
           const jsonManifestBuffer = await getFromIPFS(ipfsHash);
 
           try {
             const jsonManifest = JSON.parse(jsonManifestBuffer.toString());
-            console.log("jsonManifest", jsonManifest);
+            //console.log("jsonManifest", jsonManifest);
             collectibleUpdate.push({
               id: tokenId,
               uri: tokenURI,
@@ -171,22 +174,22 @@ function App(props) {
       const collectibleUpdate = [];
       for (let tokenIndex = 0; tokenIndex < totalNFTsBalance; tokenIndex++) {
         try {
-          console.log("Getting token index", tokenIndex);
+          //onsole.log("Getting token index", tokenIndex);
           const tokenId = await readContracts.YourCollectible.tokenByIndex(tokenIndex);
-          console.log("tokenId", tokenId);
+          //console.log("tokenId", tokenId);
           const tokenURI = await readContracts.YourCollectible.tokenURI(tokenId);
-          console.log("tokenURI", tokenURI);
+          //console.log("tokenURI", tokenURI);
           const owner = await readContracts.YourCollectible.ownerOf(tokenId);
-          console.log("owner", owner);
+          //console.log("owner", owner);
 
           const ipfsHash = tokenURI.replace("https://ipfs.io/ipfs/", "");
-          console.log("token ipfsHash", ipfsHash);
+          //console.log("token ipfsHash", ipfsHash);
 
           const jsonManifestBuffer = await getFromIPFS(ipfsHash);
 
           try {
             const jsonManifest = JSON.parse(jsonManifestBuffer.toString());
-            console.log("jsonManifest", jsonManifest);
+            //console.log("jsonManifest", jsonManifest);
             collectibleUpdate.push({
               id: tokenId,
               uri: tokenURI,
@@ -289,7 +292,10 @@ function App(props) {
                           <img src={item.image} style={{ maxWidth: 150 }} />
                         </div>
                         <div>{item.description}</div>
-                        <div>Owner: {item.owner}</div>
+                        <div>
+                          Owner:{" "}
+                          <Address address={item.owner} blockExplorer={targetNetwork.blockExplorer} fontSize={16} />
+                        </div>
                       </Card>
                     </List.Item>
                   );
