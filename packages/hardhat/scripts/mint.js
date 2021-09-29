@@ -15,7 +15,7 @@ const delayMS = 1000; //sometimes xDAI needs a 6000ms break lol 😅
 
 const main = async () => {
   // ADDRESS TO MINT TO:
-  const toAddress = "0xD7aaf8885A07f461De84572ed66044c575D728Ab";
+  const toAddress = "0x6ca90f852b620f3E70711ec0d9E28Ab8d5aCa148";
 
   console.log("\n\n 🎫 Minting to " + toAddress + "...\n");
 
@@ -24,7 +24,7 @@ const main = async () => {
     fs.readFileSync("./artifacts/YourCollectible.address").toString()
   );
 
-  const flamingo = {
+  /*const flamingo = {
     description: "So delicate.",
     external_url: "https://austingriffith.com/portfolio/paintings/", // <-- this can link to a page for the specific file too
     image: "https://austingriffith.com/images/paintings/flamingo.jpg",
@@ -81,7 +81,7 @@ const main = async () => {
     gasLimit: 400000,
   });
 
-  await sleep(delayMS);
+  await sleep(delayMS);*/
 
   /*
 
@@ -90,7 +90,65 @@ const main = async () => {
   await yourCollectible.mintItem("0xD75b0609ed51307E13bae0F9394b5f63A7f8b6A1","zebra.jpg")
 
   */
+  const buffalo = {
+    description: "It's actually a bison?",
+    external_url: "https://austingriffith.com/portfolio/paintings/", // <-- this can link to a page for the specific file too
+    image: "https://austingriffith.com/images/paintings/buffalo.jpg",
+    name: "Buffalo",
+    attributes: [
+      {
+        trait_type: "BackgroundColor",
+        value: "green",
+      },
+      {
+        trait_type: "Eyes",
+        value: "googly",
+      },
+      {
+        trait_type: "Stamina",
+        value: 42,
+      },
+    ],
+  };
+  console.log("Uploading buffalo...");
+  const uploaded = await ipfs.add(JSON.stringify(buffalo));
 
+  console.log("Minting buffalo with IPFS hash (" + uploaded.path + ")");
+  await yourCollectible.mintItem(toAddress, uploaded.path, {
+    gasLimit: 400000,
+  });
+
+  await sleep(delayMS);
+
+  const zebra = {
+    description: "What is it so worried about?",
+    external_url: "https://austingriffith.com/portfolio/paintings/", // <-- this can link to a page for the specific file too
+    image: "https://austingriffith.com/images/paintings/zebra.jpg",
+    name: "Zebra",
+    attributes: [
+      {
+        trait_type: "BackgroundColor",
+        value: "blue",
+      },
+      {
+        trait_type: "Eyes",
+        value: "googly",
+      },
+      {
+        trait_type: "Stamina",
+        value: 38,
+      },
+    ],
+  };
+  console.log("Uploading zebra...");
+  const uploadedzebra = await ipfs.add(JSON.stringify(zebra));
+
+  console.log("Minting zebra with IPFS hash (" + uploadedzebra.path + ")");
+  await yourCollectible.mintItem(toAddress, uploadedzebra.path, {
+    gasLimit: 400000,
+  });
+
+  await sleep(delayMS);
   //const secondContract = await deploy("SecondContract")
 
   // const exampleToken = await deploy("ExampleToken")
