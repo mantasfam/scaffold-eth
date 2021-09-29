@@ -2,7 +2,7 @@ import { /*StaticJsonRpcProvider,*/ Web3Provider } from "@ethersproject/provider
 //import { formatEther, parseEther } from "@ethersproject/units";
 //import { BigNumber } from "@ethersproject/bignumber";
 import WalletConnectProvider from "@walletconnect/web3-provider";
-import { /*Alert, Button,*/ Card, /*Col, Input,*/ List, Menu /*, Row*/ } from "antd";
+import { /*Alert,*/ Button, Card, /*Col, Input,*/ List, Menu /*, Row*/ } from "antd";
 //import "antd/dist/antd.css";
 import { useUserAddress } from "eth-hooks";
 import React, { useCallback, useEffect, useState } from "react";
@@ -13,8 +13,8 @@ import "./App.css";
 import {
   //Account,
   Address,
-  /*AddressInput,
-  Contract,
+  AddressInput,
+  /*Contract,
   Faucet,
   GasGauge,*/
   Header,
@@ -28,16 +28,16 @@ import {
   RaribleItemIndexer,*/
 } from "./components";
 import { /*DAI_ABI, DAI_ADDRESS,*/ INFURA_ID /*NETWORK*/, NETWORKS } from "./constants";
-//import { Transactor } from "./helpers";
+import { Transactor } from "./helpers";
 import {
   useBalance,
   useContractLoader,
   useContractReader,
   /*useEventListener,
   useExchangePrice,
-  useExternalContractLoader,
+  useExternalContractLoader,*/
   useGasPrice,
-  useOnBlock,
+  /*useOnBlock,
   useUserProvider,*/
 } from "./hooks";
 //import { matchSellOrder, prepareMatchingOrder } from "./rarible/createOrders";
@@ -93,6 +93,9 @@ function App(props) {
   const totalNFTs = useContractReader(readContracts, "YourCollectible", "totalSupply");
   const totalNFTsBalance = totalNFTs && totalNFTs.toNumber && totalNFTs.toNumber();
 
+  // If you want to make 🔐 write transactions to your contracts, use the userProvider:
+  const writeContracts = useContractLoader(injectedProvider);
+
   const [route, setRoute] = useState();
   useEffect(() => {
     setRoute(window.location.pathname);
@@ -104,6 +107,13 @@ function App(props) {
       setTargetNetwork(NETWORKS[metamaskNetworkName]);
     }
   }, [metamaskNetworkName]);
+
+  /* 🔥 This hook will get the price of Gas from ⛽️ EtherGasStation */
+  const gasPrice = useGasPrice(targetNetwork, "fast");
+  //console.log("gasPice" + gasPrice);
+
+  // The transactor wraps transactions and provides notificiations
+  const tx = Transactor(injectedProvider, gasPrice);
 
   // IPFS PART ----------------------------------------
   const { BufferList } = require("bl");
@@ -128,6 +138,7 @@ function App(props) {
   // IPFS PART END----------------------------------------
 
   // YOUR COLLECTABLES ----------------------------------------
+  const [transferToAddresses, setTransferToAddresses] = useState({});
   const [yourCollectibles, setYourCollectibles] = useState();
   useEffect(() => {
     const updateYourCollectibles = async () => {
@@ -265,6 +276,28 @@ function App(props) {
                         <div>{item.description}</div>
                         <div>{item.location}</div>
                       </Card>
+                      <div>
+                        {" "}
+                        <AddressInput
+                          placeholder="transfer to address"
+                          value={transferToAddresses[id]}
+                          onChange={newValue => {
+                            const update = {};
+                            update[id] = newValue;
+                            setTransferToAddresses({ ...transferToAddresses, ...update });
+                          }}
+                        />
+                        <Button
+                          onClick={() => {
+                            console.log("writeContracts", writeContracts);
+                            tx(
+                              writeContracts.YourCollectible.transferFrom(metamaskAddress, transferToAddresses[id], id),
+                            );
+                          }}
+                        >
+                          Transfer
+                        </Button>
+                      </div>
                     </List.Item>
                   );
                 }}
@@ -292,11 +325,11 @@ function App(props) {
                           <img src={item.image} style={{ maxWidth: 150 }} />
                         </div>
                         <div>{item.description}</div>
-                        <div>
-                          Owner:{" "}
-                          <Address address={item.owner} blockExplorer={targetNetwork.blockExplorer} fontSize={16} />
-                        </div>
                       </Card>
+                      <div>
+                        Owner:{" "}
+                        <Address address={item.owner} blockExplorer={targetNetwork.blockExplorer} fontSize={16} />
+                      </div>
                     </List.Item>
                   );
                 }}
