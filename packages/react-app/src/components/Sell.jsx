@@ -1,6 +1,6 @@
 import React from "react";
 import { Button, Input, Tooltip } from "antd";
-import { createSellOrder } from "../rarible/createOrders";
+import { createSellOrder} from "../rarible/createOrders";
 const { utils } = require("ethers");
 
 export default function Sell(props) {
@@ -19,9 +19,7 @@ export default function Sell(props) {
           }
         }}
       >
-        <span role="img" aria-labelledby="emoji">
-          ✴️
-        </span>
+        ✴️
       </div>
     </Tooltip>
   );
