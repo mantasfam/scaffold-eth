@@ -2,12 +2,12 @@ import { /*StaticJsonRpcProvider,*/ Web3Provider } from "@ethersproject/provider
 //import { formatEther, parseEther } from "@ethersproject/units";
 //import { BigNumber } from "@ethersproject/bignumber";
 import WalletConnectProvider from "@walletconnect/web3-provider";
-import { /*Alert, Button,*/ Card, /*Col, Input,*/ List /*, Menu, Row*/ } from "antd";
+import { /*Alert, Button,*/ Card, /*Col, Input,*/ List, Menu /*, Row*/ } from "antd";
 //import "antd/dist/antd.css";
 import { useUserAddress } from "eth-hooks";
 import React, { useCallback, useEffect, useState } from "react";
-/*import ReactJson from "react-json-view";
-import { BrowserRouter, Link, Route, Switch } from "react-router-dom";*/
+/*import ReactJson from "react-json-view";*/
+import { BrowserRouter, Link, Route, Switch } from "react-router-dom";
 import Web3Modal from "web3modal";
 import "./App.css";
 import {
@@ -19,6 +19,7 @@ import {
   GasGauge,*/
   Header,
   MyNFTs,
+  NFTsMarketplace,
   /*Ramp,
   ThemeSwitch,
   Sell,
@@ -93,6 +94,14 @@ function App(props) {
   const balance = useContractReader(readContracts, "YourCollectible", "balanceOf", [metamaskAddress]);
   const yourNFTsBalance = balance && balance.toNumber && balance.toNumber();
 
+  const totalNFTs = useContractReader(readContracts, "YourCollectible", "totalSupply");
+  const totalNFTsBalance = totalNFTs && totalNFTs.toNumber && totalNFTs.toNumber();
+
+  const [route, setRoute] = useState();
+  useEffect(() => {
+    setRoute(window.location.pathname);
+  }, [setRoute]);
+
   // IPFS PART ----------------------------------------
   const { BufferList } = require("bl");
   // https://www.npmjs.com/package/ipfs-http-client
@@ -115,6 +124,7 @@ function App(props) {
   };
   // IPFS PART END----------------------------------------
 
+  // YOUR COLLECTABLES ----------------------------------------
   const [yourCollectibles, setYourCollectibles] = useState();
   useEffect(() => {
     const updateYourCollectibles = async () => {
@@ -152,6 +162,49 @@ function App(props) {
     };
     updateYourCollectibles();
   }, [metamaskAddress, yourNFTsBalance]);
+  // YOUR COLLECTABLES END----------------------------------------
+
+  // NFT marketplace ----------------------------------------
+  const [allCollectibles, setAllCollectibles] = useState();
+  useEffect(() => {
+    const updateAllCollectibles = async () => {
+      const collectibleUpdate = [];
+      for (let tokenIndex = 0; tokenIndex < totalNFTsBalance; tokenIndex++) {
+        try {
+          console.log("Getting token index", tokenIndex);
+          const tokenId = await readContracts.YourCollectible.tokenByIndex(tokenIndex);
+          console.log("tokenId", tokenId);
+          const tokenURI = await readContracts.YourCollectible.tokenURI(tokenId);
+          console.log("tokenURI", tokenURI);
+          const owner = await readContracts.YourCollectible.ownerOf(tokenId);
+          console.log("owner", owner);
+
+          const ipfsHash = tokenURI.replace("https://ipfs.io/ipfs/", "");
+          console.log("token ipfsHash", ipfsHash);
+
+          const jsonManifestBuffer = await getFromIPFS(ipfsHash);
+
+          try {
+            const jsonManifest = JSON.parse(jsonManifestBuffer.toString());
+            console.log("jsonManifest", jsonManifest);
+            collectibleUpdate.push({
+              id: tokenId,
+              uri: tokenURI,
+              owner: owner,
+              ...jsonManifest,
+            });
+          } catch (e) {
+            console.log(e);
+          }
+        } catch (e) {
+          console.log(e);
+        }
+      }
+      setAllCollectibles(collectibleUpdate);
+    };
+    updateAllCollectibles();
+  }, [totalNFTsBalance]);
+  // NFT marketplace end----------------------------------------
 
   return (
     <div className="App">
@@ -160,33 +213,92 @@ function App(props) {
         metamaskAddress={metamaskAddress}
         metamaskAddressBalanceWei={metamaskAddressBalanceWei}
       />
-      <MyNFTs yourNFTsBalance={yourNFTsBalance} />
-      <div style={{ width: 640, margin: "auto", marginTop: 32, paddingBottom: 32 }}>
-        <List
-          bordered
-          dataSource={yourCollectibles}
-          renderItem={item => {
-            const id = item.id.toNumber();
-            return (
-              <List.Item key={id + "_" + item.uri + "_" + item.owner}>
-                <Card
-                  title={
-                    <div>
-                      <span style={{ fontSize: 16, marginRight: 8 }}>#{id}</span> {item.name}
-                    </div>
-                  }
-                >
-                  <div>
-                    <img src={item.image} style={{ maxWidth: 150 }} />
-                  </div>
-                  <div>{item.description}</div>
-                  <div>{item.location}</div>
-                </Card>
-              </List.Item>
-            );
-          }}
-        />
-      </div>
+
+      <BrowserRouter>
+        <Menu style={{ textAlign: "center" }} selectedKeys={[route]} mode="horizontal">
+          <Menu.Item key="/">
+            <Link
+              onClick={() => {
+                setRoute("/");
+              }}
+              to="/"
+            >
+              Your Collectibles
+            </Link>
+          </Menu.Item>
+          <Menu.Item key="/marketplace">
+            <Link
+              onClick={() => {
+                setRoute("/marketplace");
+              }}
+              to="/marketplace"
+            >
+              NFT marketplace
+            </Link>
+          </Menu.Item>
+        </Menu>
+
+        <Switch>
+          <Route exact path="/">
+            <MyNFTs yourNFTsBalance={yourNFTsBalance} />
+            <div style={{ width: 640, margin: "auto", marginTop: 32, paddingBottom: 32 }}>
+              <List
+                bordered
+                dataSource={yourCollectibles}
+                renderItem={item => {
+                  const id = item.id.toNumber();
+                  return (
+                    <List.Item key={id + "_" + item.uri + "_" + item.owner}>
+                      <Card
+                        title={
+                          <div>
+                            <span style={{ fontSize: 16, marginRight: 8 }}>#{id}</span> {item.name}
+                          </div>
+                        }
+                      >
+                        <div>
+                          <img src={item.image} style={{ maxWidth: 150 }} />
+                        </div>
+                        <div>{item.description}</div>
+                        <div>{item.location}</div>
+                      </Card>
+                    </List.Item>
+                  );
+                }}
+              />
+            </div>
+          </Route>
+          <Route path="/marketplace">
+            <NFTsMarketplace totalNFTsBalance={totalNFTsBalance} />
+            <div style={{ width: 640, margin: "auto", marginTop: 32, paddingBottom: 32 }}>
+              <List
+                bordered
+                dataSource={allCollectibles}
+                renderItem={item => {
+                  const id = item.id.toNumber();
+                  return (
+                    <List.Item key={id + "_" + item.uri + "_" + item.owner}>
+                      <Card
+                        title={
+                          <div>
+                            <span style={{ fontSize: 16, marginRight: 8 }}>#{id}</span> {item.name}
+                          </div>
+                        }
+                      >
+                        <div>
+                          <img src={item.image} style={{ maxWidth: 150 }} />
+                        </div>
+                        <div>{item.description}</div>
+                        <div>Owner: {item.owner}</div>
+                      </Card>
+                    </List.Item>
+                  );
+                }}
+              />
+            </div>{" "}
+          </Route>
+        </Switch>
+      </BrowserRouter>
     </div>
   );
 }
